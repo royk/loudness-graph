@@ -253,9 +253,7 @@ export class GraphRenderer {
         maxAmplitude += range * 0.1;
 
         // Draw data for each file
-        this.data.results.forEach((result, fileIndex) => {
-            const color1 = `hsl(${240 + fileIndex * 30}, 70%, 60%)`; // Peak amplitude
-            const color2 = `hsl(${280 + fileIndex * 30}, 70%, 60%)`; // LUFS
+        this.data.results.forEach((result) => {
 
             // Draw peak amplitude line
             this.drawLine(
@@ -268,7 +266,6 @@ export class GraphRenderer {
                 padding,
                 graphWidth,
                 graphHeight,
-                color1,
                 2
             );
 
@@ -283,7 +280,6 @@ export class GraphRenderer {
                 padding,
                 graphWidth,
                 graphHeight,
-                color2,
                 2
             );
 
@@ -301,7 +297,6 @@ export class GraphRenderer {
         padding: number,
         graphWidth: number,
         graphHeight: number,
-        baseColor: string,
         lineWidth: number
     ): void {
         if (timeData.length === 0) return;
@@ -312,7 +307,7 @@ export class GraphRenderer {
 
         if (dataType === 'peak') {
             // Draw peak line normally (single color)
-            this.ctx.strokeStyle = baseColor;
+            this.ctx.strokeStyle = '#667eea'; // Default peak color
             this.ctx.beginPath();
             
             timeData.forEach((point, index) => {
@@ -350,7 +345,7 @@ export class GraphRenderer {
                 
                 // Use spectral balance from the current point for this segment
                 const spectralBalance = currentPoint.spectralBalance;
-                const color = this.getSpectralColor(baseColor, spectralBalance);
+                const color = this.getSpectralColor(spectralBalance);
                 this.ctx.strokeStyle = color;
                 
                 // Debug logging for first few segments
@@ -367,7 +362,7 @@ export class GraphRenderer {
         }
     }
 
-    private getSpectralColor(baseColor: string, spectralBalance: number): string {
+    private getSpectralColor(spectralBalance: number): string {
         // spectralBalance ranges from -1 (bassy/red) to 1 (bright/blue)
         // Use distinct colors for each spectral balance category
         

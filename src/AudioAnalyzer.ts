@@ -102,10 +102,10 @@ export class AudioAnalyzer {
         const rmsDb = this.amplitudeToDb(rms);
         
         // Calculate LUFS (simplified implementation)
-        const lufs = this.calculateLUFS(channelData, sampleRate);
+        const lufs = this.calculateLUFS(channelData);
         
         // Generate time-based data
-        const timeData = this.generateTimeData(channelData, sampleRate, duration, lufsWindowSize);
+        const timeData = this.generateTimeData(channelData, sampleRate, lufsWindowSize);
         
         return {
             fileName: file.name,
@@ -139,7 +139,7 @@ export class AudioAnalyzer {
         return Math.sqrt(sum / channelData.length);
     }
 
-    private calculateLUFS(channelData: Float32Array, sampleRate: number): number {
+    private calculateLUFS(channelData: Float32Array): number {
         // Simplified LUFS calculation
         // In a real implementation, you would use proper EBU R128 filtering
         // This is a basic approximation using RMS with some frequency weighting
@@ -178,7 +178,7 @@ export class AudioAnalyzer {
         return lufs;
     }
 
-    private calculateSpectralBalance(windowData: Float32Array, sampleRate: number): number {
+    private calculateSpectralBalance(windowData: Float32Array): number {
         if (windowData.length === 0) return 0;
         
         // Use a much simpler approach based on amplitude distribution
@@ -241,7 +241,6 @@ export class AudioAnalyzer {
     private generateTimeData(
         channelData: Float32Array, 
         sampleRate: number, 
-        duration: number,
         lufsWindowSize: number = 3
     ): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] {
         const timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] = [];
@@ -273,7 +272,7 @@ export class AudioAnalyzer {
             const lufs = this.calculateLUFSFromWindow(lufsWindow);
             
             // Calculate spectral balance for the same window
-            const spectralBalance = this.calculateSpectralBalance(lufsWindow, sampleRate);
+            const spectralBalance = this.calculateSpectralBalance(lufsWindow);
             
             // Debug logging - let's see what values we're getting
             // if (currentTime < 5) { // Only log first 5 seconds to avoid spam
