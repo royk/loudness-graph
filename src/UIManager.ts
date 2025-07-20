@@ -15,6 +15,7 @@ export class UIManager {
     private onExportCallback?: () => void;
     private onResetCallback?: () => void;
 
+
     constructor() {
         this.dropZone = document.getElementById('dropZone')!;
         this.fileInput = document.getElementById('fileInput') as HTMLInputElement;
@@ -72,6 +73,8 @@ export class UIManager {
         this.resetBtn.addEventListener('click', () => {
             this.onResetCallback?.();
         });
+
+
     }
 
     public onFileSelected(callback: (files: FileList) => void): void {
@@ -84,6 +87,11 @@ export class UIManager {
 
     public onReset(callback: () => void): void {
         this.onResetCallback = callback;
+    }
+
+    public getCurrentLufsWindowSize(): number {
+        const lufsWindowSelect = document.getElementById('lufsWindowSelect') as HTMLSelectElement;
+        return parseFloat(lufsWindowSelect.value);
     }
 
     public showProgress(): void {

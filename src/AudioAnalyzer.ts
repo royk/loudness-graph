@@ -46,7 +46,8 @@ export class AudioAnalyzer {
 
     public async analyzeFiles(
         files: FileList, 
-        progressCallback?: (progress: number) => void
+        progressCallback?: (progress: number) => void,
+        lufsWindowSize: number = 3
     ): Promise<AnalysisData> {
         if (!this.audioContext) {
             throw new Error('AudioContext not available');
@@ -59,7 +60,7 @@ export class AudioAnalyzer {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             try {
-                const result = await this.analyzeFile(file);
+                const result = await this.analyzeFile(file, lufsWindowSize);
                 results.push(result);
                 
                 totalProgress += progressPerFile;
@@ -79,7 +80,7 @@ export class AudioAnalyzer {
         return this.analysisData;
     }
 
-    private async analyzeFile(file: File): Promise<AudioAnalysisResult> {
+    private async analyzeFile(file: File, lufsWindowSize: number = 3): Promise<AudioAnalysisResult> {
         if (!this.audioContext) {
             throw new Error('AudioContext not available');
         }
@@ -103,7 +104,7 @@ export class AudioAnalyzer {
         const lufs = this.calculateLUFS(channelData, sampleRate);
         
         // Generate time-based data
-        const timeData = this.generateTimeData(channelData, sampleRate, duration);
+        const timeData = this.generateTimeData(channelData, sampleRate, duration, lufsWindowSize);
         
         return {
             fileName: file.name,
@@ -179,12 +180,13 @@ export class AudioAnalyzer {
     private generateTimeData(
         channelData: Float32Array, 
         sampleRate: number, 
-        duration: number
+        duration: number,
+        lufsWindowSize: number = 3
     ): { time: number; peak: number; rms: number; lufs: number }[] {
         const timeData: { time: number; peak: number; rms: number; lufs: number }[] = [];
         
-        // Use 3-second sliding window for LUFS (short-term approximation)
-        const lufsWindowSize = Math.floor(sampleRate * 3); // 3 seconds
+        // Use configurable sliding window for LUFS
+        const lufsWindowSamples = Math.floor(sampleRate * lufsWindowSize);
         const stepSize = Math.floor(sampleRate * 0.1); // 100ms steps for smooth visualization
         
         // For peak and RMS, use smaller windows for more detail
@@ -204,8 +206,8 @@ export class AudioAnalyzer {
             const rms = this.calculateRMS(peakWindow);
             const rmsDb = this.amplitudeToDb(rms);
             
-            // Calculate LUFS using 3-second sliding window
-            const lufsEnd = Math.min(currentIndex + lufsWindowSize, channelData.length);
+            // Calculate LUFS using configurable sliding window
+            const lufsEnd = Math.min(currentIndex + lufsWindowSamples, channelData.length);
             const lufsWindow = channelData.slice(currentIndex, lufsEnd);
             const lufs = this.calculateLUFSFromWindow(lufsWindow);
             

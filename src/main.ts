@@ -36,9 +36,10 @@ class LoudnessGraphApp {
         try {
             this.uiManager.showProgress();
             
+            const lufsWindowSize = this.uiManager.getCurrentLufsWindowSize();
             const results = await this.audioAnalyzer.analyzeFiles(files, (progress: number) => {
                 this.uiManager.updateProgress(progress);
-            });
+            }, lufsWindowSize);
 
             this.uiManager.hideProgress();
             this.uiManager.showGraph();
@@ -75,6 +76,8 @@ class LoudnessGraphApp {
         this.uiManager.hideGraph();
         this.uiManager.clearError();
     }
+
+
 }
 
 // Initialize the app when the DOM is loaded

@@ -50,6 +50,13 @@
             text-align: center;
         }
 
+        .upload-controls {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .drop-zone {
             border: 3px dashed #667eea;
             border-radius: 8px;
@@ -150,6 +157,40 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .select-control {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            font-size: 0.9rem;
+            color: #333;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .select-control:hover {
+            border-color: #667eea;
+        }
+
+        .select-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
         }
 
         .canvas-container {
@@ -267,10 +308,22 @@
     <div class="container">
         <div class="header">
             <h1>Loudness Graph</h1>
-            <p>Analyze peak amplitude and LUFS across your album mixdown</p>
+            <p>Analyze peak amplitude and LUFS across your mix</p>
         </div>
 
         <div class="upload-section">
+            <div class="upload-controls">
+                <div class="control-group">
+                    <label for="lufsWindowSelect">LUFS Window Size:</label>
+                    <select id="lufsWindowSelect" class="select-control">
+                        <option value="0.4">Momentary (400ms)</option>
+                        <option value="3" selected>Short-term (3s)</option>
+                        <option value="10">Custom (10s)</option>
+                        <option value="30">Custom (30s)</option>
+                    </select>
+                </div>
+            </div>
+            
             <div class="drop-zone" id="dropZone">
                 <p>Drop your audio file here or click to browse</p>
                 <p style="font-size: 0.9rem; color: #999;">Supports: MP3, WAV, FLAC, M4A</p>
