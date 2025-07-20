@@ -369,21 +369,23 @@ export class GraphRenderer {
 
     private getSpectralColor(baseColor: string, spectralBalance: number): string {
         // spectralBalance ranges from -1 (bassy/red) to 1 (bright/blue)
-        // Convert base color to HSL for easier manipulation
+        // Use distinct colors for each spectral balance category
         
-        if (spectralBalance === 0) {
-            return baseColor; // Neutral, use base color
-        }
-        
-        // For simplicity, we'll use a color gradient based on spectral balance
-        if (spectralBalance < 0) {
-            // Bass-heavy (reddish)
-            const intensity = Math.abs(spectralBalance);
-            return `hsl(${0 + intensity * 30}, 70%, ${60 - intensity * 20}%)`; // Red to orange
+        if (spectralBalance < -0.5) {
+            // Very Bass-heavy: Red
+            return 'hsl(0, 80%, 50%)';
+        } else if (spectralBalance < -0.1) {
+            // Bass-heavy: Orange
+            return 'hsl(30, 80%, 50%)';
+        } else if (spectralBalance < 0.1) {
+            // Neutral: Yellow
+            return 'hsl(60, 80%, 50%)';
+        } else if (spectralBalance < 0.5) {
+            // Bright: Cyan
+            return 'hsl(180, 80%, 50%)';
         } else {
-            // Bright (bluish)
-            const intensity = spectralBalance;
-            return `hsl(${240 + intensity * 40}, 70%, ${60 - intensity * 20}%)`; // Blue to purple
+            // Very Bright: Blue
+            return 'hsl(240, 80%, 50%)';
         }
     }
 
