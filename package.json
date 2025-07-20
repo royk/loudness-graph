@@ -1,0 +1,30 @@
+{
+  "name": "loudness-graph",
+  "version": "1.0.0",
+  "description": "Browser-based audio loudness analyzer for album mixdowns",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0",
+    "@types/node": "^20.8.0"
+  },
+  "dependencies": {
+    "loudness": "^0.2.0"
+  },
+  "keywords": [
+    "audio",
+    "loudness",
+    "lufs",
+    "analysis",
+    "typescript",
+    "web-audio"
+  ],
+  "author": "",
+  "license": "MIT"
+} 
