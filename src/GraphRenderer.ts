@@ -4,6 +4,10 @@ export class GraphRenderer {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private data: AnalysisData | null = null;
+    private tooltip!: HTMLDivElement;
+    private isMouseOver: boolean = false;
+    private mouseX: number = 0;
+    private mouseY: number = 0;
 
     constructor() {
         this.canvas = document.getElementById('loudnessCanvas') as HTMLCanvasElement;
@@ -16,7 +20,129 @@ export class GraphRenderer {
             throw new Error('Could not get canvas context');
         }
 
+        this.createTooltip();
         this.setupCanvas();
+        this.setupMouseEvents();
+    }
+
+    private createTooltip(): void {
+        this.tooltip = document.createElement('div');
+        this.tooltip.style.cssText = `
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        `;
+        document.body.appendChild(this.tooltip);
+    }
+
+    private setupMouseEvents(): void {
+        this.canvas.addEventListener('mousemove', (e) => {
+            this.handleMouseMove(e);
+        });
+
+        this.canvas.addEventListener('mouseenter', () => {
+            this.isMouseOver = true;
+            this.tooltip.style.display = 'block';
+        });
+
+        this.canvas.addEventListener('mouseleave', () => {
+            this.isMouseOver = false;
+            this.tooltip.style.display = 'none';
+        });
+    }
+
+    private handleMouseMove(e: MouseEvent): void {
+        if (!this.data || !this.isMouseOver) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouseX = e.clientX - rect.left;
+        this.mouseY = e.clientY - rect.top;
+
+        const padding = 60;
+        const graphWidth = this.canvas.width - 2 * padding;
+        const graphHeight = this.canvas.height - 2 * padding;
+
+        // Check if mouse is within the graph area
+        if (this.mouseX < padding || this.mouseX > padding + graphWidth ||
+            this.mouseY < padding || this.mouseY > padding + graphHeight) {
+            this.tooltip.style.display = 'none';
+            return;
+        }
+
+        // Calculate time and amplitude from mouse position
+        const totalDuration = this.data.summary.totalDuration;
+        const time = ((this.mouseX - padding) / graphWidth) * totalDuration;
+
+        // Find the closest data point
+        const closestPoint = this.findClosestDataPoint(time);
+        if (closestPoint) {
+            this.updateTooltip(closestPoint, e.pageX, e.pageY);
+        }
+    }
+
+    private findClosestDataPoint(targetTime: number): { time: number; peak: number; rms: number; lufs: number; fileName: string } | null {
+        if (!this.data) return null;
+
+        let closestPoint: { time: number; peak: number; rms: number; lufs: number; fileName: string } | null = null;
+        let minDistance = Infinity;
+        let currentTime = 0;
+
+        this.data.results.forEach(result => {
+            result.timeData.forEach(point => {
+                const pointTime = currentTime + point.time;
+                const distance = Math.abs(pointTime - targetTime);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = {
+                        ...point,
+                        fileName: result.fileName
+                    };
+                }
+            });
+            currentTime += result.duration;
+        });
+
+        return closestPoint;
+    }
+
+    private updateTooltip(point: { time: number; peak: number; rms: number; lufs: number; fileName: string }, pageX: number, pageY: number): void {
+        const timeStr = this.formatTime(point.time);
+        const peakStr = isFinite(point.peak) ? `${point.peak.toFixed(1)} dB` : 'Silence';
+        const lufsStr = isFinite(point.lufs) ? `${point.lufs.toFixed(1)} LUFS` : 'Silence';
+
+        this.tooltip.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 4px;">${point.fileName}</div>
+            <div>Time: ${timeStr}</div>
+            <div>Peak: ${peakStr}</div>
+            <div>LUFS: ${lufsStr}</div>
+        `;
+
+        // Position tooltip using page coordinates (relative to document)
+        const tooltipRect = this.tooltip.getBoundingClientRect();
+        let x = pageX + 15;
+        let y = pageY - tooltipRect.height - 10;
+
+        // Adjust if tooltip would go off screen
+        if (x + tooltipRect.width > window.innerWidth + window.pageXOffset) {
+            x = pageX - tooltipRect.width - 15;
+        }
+        if (y < window.pageYOffset) {
+            y = pageY + 15;
+        }
+
+        this.tooltip.style.left = `${x}px`;
+        this.tooltip.style.top = `${y}px`;
+        this.tooltip.style.display = 'block';
     }
 
     private setupCanvas(): void {
@@ -258,5 +384,6 @@ export class GraphRenderer {
     public reset(): void {
         this.data = null;
         this.clear();
+        this.tooltip.style.display = 'none';
     }
 } 
