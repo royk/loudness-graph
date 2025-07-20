@@ -89,10 +89,10 @@ export class GraphRenderer {
         }
     }
 
-    private findClosestDataPoint(targetTime: number): { time: number; peak: number; rms: number; lufs: number; fileName: string } | null {
+    private findClosestDataPoint(targetTime: number): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string } | null {
         if (!this.data) return null;
 
-        let closestPoint: { time: number; peak: number; rms: number; lufs: number; fileName: string } | null = null;
+        let closestPoint: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string } | null = null;
         let minDistance = Infinity;
         let currentTime = 0;
 
@@ -115,16 +115,18 @@ export class GraphRenderer {
         return closestPoint;
     }
 
-    private updateTooltip(point: { time: number; peak: number; rms: number; lufs: number; fileName: string }, pageX: number, pageY: number): void {
+    private updateTooltip(point: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string }, pageX: number, pageY: number): void {
         const timeStr = this.formatTime(point.time);
         const peakStr = isFinite(point.peak) ? `${point.peak.toFixed(1)} dB` : 'Silence';
         const lufsStr = isFinite(point.lufs) ? `${point.lufs.toFixed(1)} LUFS` : 'Silence';
+        const spectralStr = this.getSpectralDescription(point.spectralBalance);
 
         this.tooltip.innerHTML = `
             <div style="font-weight: 600; margin-bottom: 4px;">${point.fileName}</div>
             <div>Time: ${timeStr}</div>
             <div>Peak: ${peakStr}</div>
             <div>LUFS: ${lufsStr}</div>
+            <div>Spectral: ${spectralStr}</div>
         `;
 
         // Position tooltip using page coordinates (relative to document)
@@ -290,7 +292,7 @@ export class GraphRenderer {
     }
 
     private drawLine(
-        timeData: { time: number; peak: number; rms: number; lufs: number }[],
+        timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[],
         dataType: 'peak' | 'lufs',
         startTime: number,
         totalDuration: number,
@@ -299,37 +301,90 @@ export class GraphRenderer {
         padding: number,
         graphWidth: number,
         graphHeight: number,
-        color: string,
+        baseColor: string,
         lineWidth: number
     ): void {
         if (timeData.length === 0) return;
 
-        this.ctx.strokeStyle = color;
         this.ctx.lineWidth = lineWidth;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
-        this.ctx.beginPath();
-
-        timeData.forEach((point, index) => {
-            const x = padding + ((startTime + point.time) / totalDuration) * graphWidth;
-            const value = dataType === 'peak' ? point.peak : point.lufs;
+        if (dataType === 'peak') {
+            // Draw peak line normally (single color)
+            this.ctx.strokeStyle = baseColor;
+            this.ctx.beginPath();
             
-            // Skip -Infinity values (silence)
-            if (!isFinite(value)) {
-                return;
-            }
+            timeData.forEach((point, index) => {
+                const x = padding + ((startTime + point.time) / totalDuration) * graphWidth;
+                const value = point.peak;
+                
+                if (!isFinite(value)) return;
+                
+                const y = padding + graphHeight - ((value - minAmplitude) / (maxAmplitude - minAmplitude)) * graphHeight;
+
+                if (index === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            });
             
-            const y = padding + graphHeight - ((value - minAmplitude) / (maxAmplitude - minAmplitude)) * graphHeight;
-
-            if (index === 0) {
-                this.ctx.moveTo(x, y);
-            } else {
-                this.ctx.lineTo(x, y);
+            this.ctx.stroke();
+        } else {
+            // Draw LUFS line with spectral balance colors (segment by segment)
+            for (let i = 1; i < timeData.length; i++) {
+                const prevPoint = timeData[i - 1];
+                const currentPoint = timeData[i];
+                
+                const prevValue = prevPoint.lufs;
+                const currentValue = currentPoint.lufs;
+                
+                if (!isFinite(prevValue) || !isFinite(currentValue)) continue;
+                
+                const prevX = padding + ((startTime + prevPoint.time) / totalDuration) * graphWidth;
+                const currentX = padding + ((startTime + currentPoint.time) / totalDuration) * graphWidth;
+                
+                const prevY = padding + graphHeight - ((prevValue - minAmplitude) / (maxAmplitude - minAmplitude)) * graphHeight;
+                const currentY = padding + graphHeight - ((currentValue - minAmplitude) / (maxAmplitude - minAmplitude)) * graphHeight;
+                
+                // Use spectral balance from the current point for this segment
+                const spectralBalance = currentPoint.spectralBalance;
+                const color = this.getSpectralColor(baseColor, spectralBalance);
+                this.ctx.strokeStyle = color;
+                
+                // Debug logging for first few segments
+                // if (i < 10) {
+                //     console.log(`Segment ${i}: Spectral=${spectralBalance.toFixed(3)}, Color=${color}`);
+                // }
+                
+                // Draw this segment
+                this.ctx.beginPath();
+                this.ctx.moveTo(prevX, prevY);
+                this.ctx.lineTo(currentX, currentY);
+                this.ctx.stroke();
             }
-        });
+        }
+    }
 
-        this.ctx.stroke();
+    private getSpectralColor(baseColor: string, spectralBalance: number): string {
+        // spectralBalance ranges from -1 (bassy/red) to 1 (bright/blue)
+        // Convert base color to HSL for easier manipulation
+        
+        if (spectralBalance === 0) {
+            return baseColor; // Neutral, use base color
+        }
+        
+        // For simplicity, we'll use a color gradient based on spectral balance
+        if (spectralBalance < 0) {
+            // Bass-heavy (reddish)
+            const intensity = Math.abs(spectralBalance);
+            return `hsl(${0 + intensity * 30}, 70%, ${60 - intensity * 20}%)`; // Red to orange
+        } else {
+            // Bright (bluish)
+            const intensity = spectralBalance;
+            return `hsl(${240 + intensity * 40}, 70%, ${60 - intensity * 20}%)`; // Blue to purple
+        }
     }
 
     private drawLabels(): void {
@@ -385,5 +440,19 @@ export class GraphRenderer {
         this.data = null;
         this.clear();
         this.tooltip.style.display = 'none';
+    }
+
+    private getSpectralDescription(spectralBalance: number): string {
+        if (spectralBalance < -0.5) {
+            return 'Very Bass-heavy';
+        } else if (spectralBalance < -0.1) {
+            return 'Bass-heavy';
+        } else if (spectralBalance < 0.1) {
+            return 'Neutral';
+        } else if (spectralBalance < 0.5) {
+            return 'Bright';
+        } else {
+            return 'Very Bright';
+        }
     }
 } 

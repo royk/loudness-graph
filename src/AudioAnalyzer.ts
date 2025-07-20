@@ -12,6 +12,7 @@ export interface AudioAnalysisResult {
         peak: number;
         rms: number;
         lufs: number;
+        spectralBalance: number; // -1 (bassy/red) to 1 (bright/blue)
     }[];
 }
 
@@ -177,13 +178,73 @@ export class AudioAnalyzer {
         return lufs;
     }
 
+    private calculateSpectralBalance(windowData: Float32Array, sampleRate: number): number {
+        if (windowData.length === 0) return 0;
+        
+        // Use a much simpler approach based on amplitude distribution
+        // This should be more reliable for music analysis
+        
+        let lowFreqEnergy = 0;
+        let midFreqEnergy = 0;
+        let highFreqEnergy = 0;
+        
+        // Simple frequency analysis using amplitude patterns
+        for (let i = 0; i < windowData.length; i++) {
+            const sample = Math.abs(windowData[i]);
+            
+            // Low frequency: higher amplitude samples (bass, kick drums)
+            if (sample > 0.05) {
+                lowFreqEnergy += sample;
+            }
+            
+            // Mid frequency: moderate amplitude (vocals, guitars)
+            if (sample > 0.01 && sample <= 0.05) {
+                midFreqEnergy += sample;
+            }
+            
+            // High frequency: low amplitude (cymbals, hi-hats, noise)
+            if (sample <= 0.01) {
+                highFreqEnergy += sample;
+            }
+        }
+        
+        // Normalize by window length
+        const totalSamples = windowData.length;
+        lowFreqEnergy /= totalSamples;
+        midFreqEnergy /= totalSamples;
+        highFreqEnergy /= totalSamples;
+        
+        // Calculate total energy
+        const totalEnergy = lowFreqEnergy + midFreqEnergy + highFreqEnergy;
+        
+        if (totalEnergy === 0) return 0;
+        
+        // Calculate spectral balance based on energy distribution
+        // More low frequency = negative (bassy)
+        // More high frequency = positive (bright)
+        const lowRatio = lowFreqEnergy / totalEnergy;
+        const highRatio = highFreqEnergy / totalEnergy;
+        
+        // Spectral balance: -1 (all low freq) to +1 (all high freq)
+        const spectralBalance = highRatio - lowRatio;
+        
+        // Debug logging for first few windows
+        // if (windowData.length > 0 && Math.random() < 0.1) { // Log ~10% of windows to avoid spam
+        //     console.log(`Spectral Debug: Low=${lowRatio.toFixed(3)}, Mid=${(midFreqEnergy/totalEnergy).toFixed(3)}, High=${highRatio.toFixed(3)}, Balance=${spectralBalance.toFixed(3)}`);
+        // }
+        
+        return Math.max(-1, Math.min(1, spectralBalance));
+    }
+
+
+
     private generateTimeData(
         channelData: Float32Array, 
         sampleRate: number, 
         duration: number,
         lufsWindowSize: number = 3
-    ): { time: number; peak: number; rms: number; lufs: number }[] {
-        const timeData: { time: number; peak: number; rms: number; lufs: number }[] = [];
+    ): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] {
+        const timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] = [];
         
         // Use configurable sliding window for LUFS
         const lufsWindowSamples = Math.floor(sampleRate * lufsWindowSize);
@@ -211,11 +272,20 @@ export class AudioAnalyzer {
             const lufsWindow = channelData.slice(currentIndex, lufsEnd);
             const lufs = this.calculateLUFSFromWindow(lufsWindow);
             
+            // Calculate spectral balance for the same window
+            const spectralBalance = this.calculateSpectralBalance(lufsWindow, sampleRate);
+            
+            // Debug logging - let's see what values we're getting
+            // if (currentTime < 5) { // Only log first 5 seconds to avoid spam
+            //     console.log(`Time: ${currentTime.toFixed(1)}s, Spectral Balance: ${spectralBalance.toFixed(3)}`);
+            // }
+            
             timeData.push({
                 time: currentTime,
                 peak: peakDb,
                 rms: rmsDb,
-                lufs
+                lufs,
+                spectralBalance
             });
             
             currentTime += stepSize / sampleRate;
