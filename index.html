@@ -3,7 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loudness Graph - Album Analyzer</title>
+    <title>Loudness Graph - Audio Analysis Tool | Peak, LUFS & Spectral Balance</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Loudness Graph - Audio Analysis Tool | Peak, LUFS & Spectral Balance">
+    <meta name="description" content="Free online audio analyzer for measuring peak amplitude, LUFS loudness, and spectral balance. Upload MP3, WAV, FLAC, or M4A files to visualize your mix's loudness characteristics.">
+    <meta name="keywords" content="loudness meter, LUFS analyzer, audio analysis, peak amplitude, spectral balance, mixing tool, mastering tool, audio visualization, free audio analyzer">
+    <meta name="author" content="Memento Eternum">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://loudness-graph.netlifyapp.com">
+    <meta property="og:title" content="Loudness Graph - Audio Analysis Tool">
+    <meta property="og:description" content="Free online audio analyzer for measuring peak amplitude, LUFS loudness, and spectral balance. Perfect for mixing and mastering.">
+    <meta property="og:image" content="https://loudness-graph.netlifyapp.com/og-image.png">
+    <meta property="og:site_name" content="Loudness Graph">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://loudness-graph.netlifyapp.com">
+    <meta property="twitter:title" content="Loudness Graph - Audio Analysis Tool">
+    <meta property="twitter:description" content="Free online audio analyzer for measuring peak amplitude, LUFS loudness, and spectral balance. Perfect for mixing and mastering.">
+    <meta property="twitter:image" content="https://loudness-graph.netlifyapp.com/og-image.png">
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="application-name" content="Loudness Graph">
+    <meta name="theme-color" content="#667eea">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Loudness Graph">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://loudness-graph.netlifyapp.com">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Loudness Graph",
+      "description": "Free online audio analyzer for measuring peak amplitude, LUFS loudness, and spectral balance. Upload audio files to visualize your mix's loudness characteristics.",
+      "url": "https://loudness-graph.netlifyapp.com",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Memento Eternum",
+        "url": "https://meternum.com"
+      },
+      "featureList": [
+        "Peak amplitude measurement",
+        "LUFS loudness analysis",
+        "Spectral balance visualization",
+        "Multiple audio format support",
+        "Real-time audio processing",
+        "Export functionality"
+      ],
+      "screenshot": "https://loudness-graph.netlifyapp.com/screenshot.png",
+      "softwareVersion": "1.0.0"
+    }
+    </script>
     <style>
         * {
             margin: 0;
@@ -40,6 +113,42 @@
             font-size: 1.1rem;
             opacity: 0.9;
         }
+
+        .header-links {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-left: auto;
+    }
+
+    .header-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .header-link:hover {
+      background-color: rgba(135, 116, 180, 0.815);
+      text-decoration: none;
+    }
+
+    .header-link img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
+
+    .meternum-logo {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
 
         .upload-section {
             background: white;
@@ -307,8 +416,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Loudness Graph</h1>
-            <p>Analyze peak amplitude and LUFS across your mix</p>
+            <h1>Loudness & Spectral Balance Graph</h1>
+            <p>Analyze peak, LUFS, and spectral balance across your mix</p>
+            <div class="header-links">
+                <a href="https://meternum.com" target="_blank" class="header-link">
+                  <img class="meternum-logo"
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAFTxJREFUeJzFm2usV9WZhzecczjCARWOiOAdQayOF3AQRSPxg9GSVp20HzWt/eI4TWM6H6ydMUWbfppJnKT10qozyaCmia0Zk2kyRYwytTNj6hUkRryggugRkJsXDhzgzO9Z7Oc/iyNFRMisk5W9/3uvvdb7/t7Let9379PVHOF28sknn3ncccd9+9hjj/3+0Ucf/YP02ydMmLBo/Pjxd44dO/bOcePG/aS3t/e2o4466pb07+XatTlenvv9Gbfl008/3XIk6es63BOedNJJXWF2YRj96THHHHPXqFGj/n54ePib6bNzPj3H/gwbl/PunI/Okd6T3jd69Ojjcjwj9+fk/Lru7u5bMscNmWtOANkSYNZ89tlnw4eT3sMGQCQ9NYTeEQb+JT9v2r1791/keEx+jwqjZUxOO+PDYDNmzJimq6urCaPl6PWenp5yL+c8Pin9gszx3dy+IRrSP3HixOUff/zx4OGg+ysDMHXq1CmRzi9yen+IXJDjBJiQMToNprjO70iyieo3ea70aEwTMygA1aDwmw6AQ0NDTUCduGfPngW7du26ua+v78T0/45G7Ph/ASCq3tNK/Nf5OQ81hvBaoiGwOf7445v4gCZSayZPnlwY5HeAa6ZMmdKccMIJTeZpoupNpFue5TdM79ixowmzMt8BI0D25vyi9JsC4FB8xZ8++eSTQzKNQwIg6j43h9+nfztEjFHiHCFy586dheFp06YVZgGBc5g+5ZRTCtOAMWnSpMI0GgFYmgEgwDDXBgcHCwA05naN9vfY9KtyurC/v/8/t27d+tERByCM3JrD4hAydSRBNFQd5lBrJMkx2lIAAQBUHUAACcYdA5ObN28uY7kOcJgH80Xty3hBqAAoPcBNC2A3ZvxANOHlIwLA6aef3h1pPZQF/zZEdUuEDo6GGsMcHaZggiOSzvPF7gFA+0a69Gx1BYBIsQBFh2nGR70LyJwDDOO4VwPQmgaaeG27fT5xsCZxUABE6n1BeGmQ/gZqKvPYMzYKYUgLCaPeMMARILwG46g0Kg/TSBbwPMIkc3BkPhjnN3PxrODRfUbTsLV0zcu982bOnPn4wMDA7q8MwGmnndYXT/tUpDYf4uhIACKUBip/4oknFqemc4MBGJ4wfkI5V5UBECaG9ww3O4d2dubgukC4Y2heaBFzlfkyF8ALQmUGZXwLxFnRgLlZ5zfbt28/IAgHBCD22J0JlsK8Dgpi7agy6o2Dk3nA4DrE4MhgkI6aq7rbtm0rv/HyziPDxgBqmvMwBhOJAy73WYd1aWiaOwXzAUzOZ+T5cwLabw8UPB0QgBDzUBb+Rh2ooPIQgCQgAsZPPfXUcnSbgwka6t4GNOU3hPE8zHPOfZrxAV3m0RLOucY5DOpXABoweI45cKQ0HCXm5VoB42tZb1yuLf3SAISZW0MIDq+jYiIMYaCObSMR7BRAIKaK4vaRKB0msGWaUhcsGS0AdvcUdecagDkO5gCB9bjPde5zzrP4DuhjHAC0Dnp+7q3KtZUHDUAQnhtmFxOv67FlAiZhnI76IxHtk8UdC3HaqI6NcwjmulJmfolVE3qP6u0853jWRQCCACAxz3Jvy5YtpQOu/oQj4+kZ83X8QUxu0xcCEMZ6okpLMsHUWpLab5xiUUE6WkCDOQiHKBY0ojMqhFH9BmYi4ZoEzfk1NQBgLn0BczMW7eju2Rtef7zt4zIHoBh56gtYEx+DWbBFZvhsTDq/9xwQgBB/R4j5ltJwD2ZCozs6jNS2q5QZp80DBN1rSA4HCCMwBbG1FgC4khf8srWhyaP+b9/fsGFDEy9f1oB5wEsU2DE3xnCtdsRpp2Sdt+MQ9wmU9gEgXn9KUPs14W0d18sYWx0agL0bALGQoSyLgzrnEMF1iHIuACy7ws6hZkzvmI6ka48vWG6bJZka3uvgjB6NDN9///2O5nBcv359kyyx+eijj4qjBWjNshXKggjzV7k3uF8AIq1fhLF5dbgJgnhctyCkCKNlLw8IeGAY0Htz1CRc3PBY6QztGtqrBflTS+rMj/G1lwfQdmtrIsGOxkEDti8Arecvz9O5B1BqXJs7fBKQnvkcAJHu1EjvgUzSUwchqD8qz1aHzdcRGwRwLqPau56b39i7KbHzQRzHeIEO0GqSsQXbKswz17at25qt27aWsWgY4wBD5nS4CADtBDw0bdOmTSW/4LwK2edGiL+MKQ7uAwDlqUx2uYyoNkidDkGYANdRM6SJSjPx+L7xReXQBsGDyI5XDyg0tId8QS1R+vyGacDkHObcNgGQuWFOht1BOOeIVnCvDqhg3Dxi48aNdQ7Rm/PVmfOFDgCUsYLsPzdtMcMOQ257ZGmmqS4kMzgoFpNpmlKBaU2jjK3uwZx2yhgBQUM4oiUffvhhkboxiCG426NJFWPVLv0CgnKL5HnXyvms3L43v4cLAGFkYRa5ScYhBmkgdaTPOcziaUEcYJgQhmFQL65q1/6Ae2aE7ACCx1w0nkN6SJHrMOscOkHD5tGj4hzH9HSSMIDQ0ZowGWVCH2viKNGGNh7QV/SHvt9lzvcLAJnkp20Nr6O2SACVp8MwBLAwixADsKiOrg5seM6F3BkgFiKUmvZosYOxSIs1zPb0B5oBffyE8R1JSqtxg0EQ9wH3+MnHl99r167tAKi/abV0IOsvK09n0bsy+Bg1AInhtS1XsQiEwFy9PZqp1VGbGZv+wLIWDJj/q8ru9fVWqvrXoXVdF2SL05x01PoZqk3Qhrb2je8rmoX914mXc2Vcf7Tuvq6o+KwM/DuctCklqgMBODkmgxmDIcyBI4EI9/ntdonJMFbVZ2E9PATADEQxl8UStYZ1jBVY2wSozghrm2cMjTH8Zoei6MJzps+YFSaAD4CWeo70yQH9ga4M/FYm+aYLGYRAZJ3hoVbu1xxhQEcICFwDODUEqbOgROoTIAzNMnRG8kq03h10lJpTvcPAsOrPOTRAq/kE1wzgAOGDDz4oJlbXFvceRj0BAN8PobPr8pKOS2kYrYGuDlItwbG1jnSfao0e1yDE8Jbu7mGyQgMYmimxnlymtX2rRMYC2r6Ok4a0VX8Eh7YSE5gqV0WU5V1B+weZYHpdaGQRVAom3QpZEDt2IQg1C7TgATjclyklCFDbP9tepKHzNA2uC6v1LqTkawBNl1mDa4bW7gLcc0s0gzQiZG38Rw1A+ntdIe72LNJf3zAaYwGObiltZtUhRoeCeumsAA+i6cTmjjcYATDuMReAcjTwqWMIQazp0n5pzAFT+Bb9jFuz27J5BdcZhykIaPvMUFceWJSTcbUGgKDMM5GTog2gyaRWbpkYxmAAZh5++OHmnHPOaV5++eVmxYoVRfVeeeWVZvny5c0bb7xRnmP+Bx98sDnzzDObu+++uxCGA1u0aFFzxRVXNPfff38Zd8899zQvvPBCScA453n6eeedVzTOxMgo0fcRaqTah4BWrVrVGePWXSJBQuD86B5RYi5OxXhcGzcLU02RoJUZxrHo448/3syYMaNZsmRJ54UIcxIHYI9oBXM8++yzzezZs5vXX3+9Ofvss5szzjijgMa+/fbbbzdXXnllYeTcc88tY6+66qrmkksuaZ588slm5syZhUZzDSXMeLSCtQAegBhHNKngjD1aDesWgNE1AKgxCYWqxMNWagmC6loeHcZ5hrEA8uijjzbXXXddQZ5AijHvvfdeIfKiiy5qnn/++aKeMAlxAMbOsGbNmvL8M88801xzzTXNu+++W7TOXYQd6amnnmrmzp1b1mdNy+fWK1BxmB8YGOjEHESQrM2WyD13qPDaBQA/GQmAJmAcYAmqDlrcEdy62A2M/K6//vpyD++7bt26ZuXKleUeDMybN6+58MILSzVn7kVzm2XLlhXn5Nuiq6++ujyzYMGCMidzz58/vzCO9iB9mIYuTdPKEQwjrA3rNzTj+vbGGgCIlmgCzGFFCjcAAD8eaQIw6qspGPUdnp4WxnrHxAmO3psZAhgag4pPnz6944GxXXIJpMt1bN7A6bLLLivzXXrppUWiSGXWrFnlePHFF5cxvmGCpgsuuKCk5Jxz3ZxCH2BIjeQVDI7XihBmBUCADQBtnWI7ANwSgvtqAHx9DROWvrgGs0pe1A1dWQRgXABGkJLbma/AIApgtGF9Dv2tt94qUnL70inzLNqAGaGVBmRc1/lCH/OjAabfrItZ4ReYH5MyM2zbh+wC38vN44zgDHrc1pgYxiDWbRB74hq1OcaBOo7qrLPOKs9y/emnny4gMI55li5dWlQXbeCZ5557ruwMBkXM/dhjj3VCccBmTtbF8/MMGvDII4+U+9zDHNhBDJxMk1mvvG/cOVTePqGZ+BpABIxqK3yVSPDanJxRb4M0UMbh1Xm3W6FSZ2IIhilsDABYGEZZfMbMGUWTYPLNN98sZmK2CGgwhimYvsLMiy++WK65zcIU4MA867JLoClshWosY81gmQsmEQRAIUDW4joAGHu0fP5HVxi6PDfnqIaqpNUemDPc5B6TG4hwH5BQa8NmCGHMtBOn7RONQQge2CiQ7REmGIOWQBQAEUOoomzDMDtnzpxOcRWm8BkWQHi2Dq4EhXFqJ79hHM0EBHlJe6gr9sKHSdfWebolZRyWPsCMTxXiyH1TURiCILQCEzEkNU5wR7G6w7mFEIjjSDeb5BxASXEBuE6mjB59D8FYADbtNieBD+ze2qAmYJaZ/g/4AMqqt5Aa1W9bS62v/UCBCa35sSCT1sVQ3wyz+DvvvFOQhmEDD5MdtAGJAoLv83jGuj6E4vVZCx9gSA3BmJh+ysSJeVjL581TGM/aZUvMfRyh0jcaRM7pt3WFwC0h7Ib8mFTH3sbwFkJYzKqKqafFEt/hWbL20xbL2YzhnrGCdQdjCMHWXlV31uMZjr7uMk2GLhg0WRsZArPeq6++Wo5oEPQAMPO1mv7Sa6+9dldX6/DmhLELzMrsqCkmwEIWMFBLtIAjhLEwwQU2ZxHDpIcj45AMKqhZ0IjKaDxH8xsCCPYFC41tFYmhEUZ90MV1/RS/0SRrC9BHMMVv5gEAHCz+okqefp45/lgACFFbcuG77gD13g0jenIm9x7XfNVtJEh5nDamZ0wJgNAGFhV9K8QCSB4AcdYV/BIMcEpOv2Nniej8PshwF4FAF3Ojja6jlgAG8zKOedEq7mMmVVXohxmzXgDW5MINeXhi9Rqpo0pIRn+AJNpnyuQubJJRABre03F21AEom+usjB/M+XnZafXXqo01fs4hGkZgCiFwzSjQlyI0K790tMO937yAuVm7zQRfyho/Y96u1hENh6H+ML+gNoFR1RtaAxhfc0MQjfcF2KEVYq5rHqi3FR5ffkKEZS8+k+nqjlMb19ep91tZYg7MjrEw53dIdMN0OvMRTwCERVWYxVFjmqtXry6C0gRb+781znhFSYd1fHl4eQ43h7neGgCZBC38gTZ4/vnnd7Y4IzfU07CUsVxTWpa3MQOapbTydqf9HsB3fZoYY1Blgy+LNFZ8nJf4wXgC6bPTqL2m4cYvWWdjhHNz1tm5DwAZMJiJ+ehmnjtBnR6zKJOTt+t5TUAMhLBdiLTCCxg7BvdWg5GGLzE0FZllr2dOwXPbBDBrDcxfF055HsZ4BuDcbvErJkJ01N8aYRvr/DgAff7lKC0T/08YvomNoa7VKT0LEHpsFoJwKj+kvFx3i/Q9HgRAiDZsLu6+T0OCZn2MQ/L4CZhC3f0OqNQWc5/MzncL1iaQPmGy95kbDUQDLJqEroGsf2OuDe0XgCw4GDSHMvCqWgvabaOcQwTShQH2WWJ8JILkzQOK5NsKjTmEntpYQTMxfi9h9qd7o0zfQYz8iEqHDCg0skNTXp5Do3B8gAfwdK5ZoQ5N34lPWFHz/LkvRLL4n0LMwjwwTRBMVvxAyv3ekFPp0fW0ftOD2VjTN3r0bZGvzSBycPtgcYgAaDEVZvzchrn0Kb5NLgxEGH6CByB+PcKcgKPG5f7vMvyOSH/4gACwI8T+luX0xvbbmtIEwddbVlvNyW0QAgGWpGiAxDUYg0Df5jiHuwfMbNm8pRRa/IKc6wBhLIDmWJuogcL/EOy4BVp7bBOrzekLo63bRvK736/EomqbgvxATq+t02RfeLhfWyjhOmhjdzBKxcbQdO2atc3gjsFy3a9LZJg5VVELqOwIJjB01N0w2w8s6YIL0DBLrsCRDhDmGK3w/ipb5X4/ov6z3wlmgpejCf18MlNrgRljbd9WigxoUNv6qy+e8RWbgQxmYAwBQzCIduix+U2xFO0xc+SeWx5S9wtzQIBpo7/6XUFo/FGYX/zn+Dzgl6IJfp7IwudnorPUApulaF9OuCNgm/oBpAThXLeERUCFJrBbWGfwHT5jkLKVKFTZLZX10BCYN7ND2mgJvwGE+aFFIWWe+/Lc7SPt/qABCJrD06dP/7cQ8pf5OcPrlWoV9bT87Fsikw7NBIaty0G0BQs699i+uA4IOk+3POaDQZ6FWSTMOEHjWe5z7l7ffpP4r6Htb5KeH/rH0rRMvjuJzW/D5Nn5+TXTUWMEGYdYtzltFCkZ3VmxgWHBQbI4LbZTnql9CoA4h3k/THJE3fX4en2daSuc+9JhfujA3B3k/wsE+d3Zwh4LYbxCm78/AHyRafTGPT+Lk0C3QqvF5vk8o3N0m6T5QcbmTWF844ZOfF9/C+hbHmlI+1HWuT3B0Bf+r8BBA0Djk3M+nY9jXJUFvs4WWSG+T8Bk5GgKilagvgZIOEFslm5d30IFDg31ZldwL+c3qu6nrzJugEMLTZvx9hm3GNM9WL6+9P8MhZmVkeCjOZ0Twk8xHa2bW6YAQahJEZJDkqi36THn5uoWRBkLiEhcDbJEptZVzu7fc1gY5r/U/wsdEgC0EEScsDj2vTqMkUKPNZytP7OrEyqJ94WH9QO/HfIdAs0tlus6N1ptbm0byDrfybU7w/zngpwjBgANk4jaLk/A86towqchhDeWvTLuSxZB8WvR+jN2GFWtPTdKRCOwdatENfO59lGu8UrvxjC+InQc8r/TfuX/HA2hg+l/yJb2y/xcnT4rDPfXX3vUmqGvGGk6AiIYasyIhOylnN8aLfrrNWvWPBPGv9DLf1E7bP87DBCR2Asxi3vzE5scCKGkbZObvR8kdaRZp9ojgahfzqSj6y+m/zznPwwwP1u3bt0KixmHox32/x4nmYqX/iD2vCyg3Jso8IFowZIwtTzMrs2QXS3jvJHuynFPOvW1gTC5Mv336Ysj7X/Mtdsi6X8Kw/+VudbrIw5n+19Fzsm/jFfr+wAAAABJRU5ErkJggg=="
+                    alt="Memento Eternum Logo">
+                  By Memento Eternum
+                </a>
+                <a href="https://github.com/royk/loudness-graph" target="_blank" class="header-link">
+                  <img src="https://github.com/favicon.ico" alt="GitHub">
+                  View on GitHub
+                </a>
+          
+              </div>
         </div>
 
         <div class="upload-section">
@@ -372,5 +494,42 @@
     </div>
 
     <script type="module" src="/src/main.ts"></script>
+    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+  <script>
+    kofiWidgetOverlay.draw('royklein', {
+      'type': 'floating-chat',
+      'floating-chat.donateButton.text': 'Support me',
+      'floating-chat.donateButton.background-color': '#00b9fe',
+      'floating-chat.donateButton.text-color': '#fff'
+    });
+  </script>
+   <style>
+    .floatingchat-container-wrap {
+      left: unset;
+      right: 50px;
+      width: 50%;
+    }
+
+    .floatingchat-container-wrap-mobi {
+      left: unset;
+      right: 50px;
+      width: 50%;
+    }
+
+    .floating-chat-kofi-popup-iframe {
+      left: unset;
+      right: 50px;
+    }
+
+    .floating-chat-kofi-popup-iframe-mobi {
+      left: unset;
+      right: 50px;
+    }
+
+    .floating-chat-kofi-popup-iframe-closer-mobi {
+      left: unset;
+      right: 50px;
+    }
+  </style>
 </body>
 </html> 
