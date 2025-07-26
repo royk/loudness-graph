@@ -311,6 +311,27 @@
             overflow: hidden;
         }
 
+        .playback-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .playback-hint:hover {
+            opacity: 1;
+        }
+
         canvas {
             display: block;
             width: 100%;
@@ -474,6 +495,9 @@
             
             <div class="canvas-container">
                 <canvas id="loudnessCanvas"></canvas>
+                <div class="playback-hint">
+                    <span>💡 Click and hold anywhere on the graph to play audio from that position</span>
+                </div>
             </div>
             
             <div class="legend">

@@ -1,16 +1,22 @@
 import { AudioAnalyzer } from './AudioAnalyzer';
 import { GraphRenderer } from './GraphRenderer';
 import { UIManager } from './UIManager';
+import { AudioPlayer } from './AudioPlayer';
 
 class LoudnessGraphApp {
     private audioAnalyzer: AudioAnalyzer;
     private graphRenderer: GraphRenderer;
     private uiManager: UIManager;
+    private audioPlayer: AudioPlayer;
 
     constructor() {
         this.audioAnalyzer = new AudioAnalyzer();
+        this.audioPlayer = new AudioPlayer();
         this.graphRenderer = new GraphRenderer();
         this.uiManager = new UIManager();
+        
+        // Set up audio player for graph renderer
+        this.graphRenderer.setAudioPlayer(this.audioPlayer);
         
         this.initialize();
     }
@@ -45,6 +51,7 @@ class LoudnessGraphApp {
             this.uiManager.showGraph();
             
             this.graphRenderer.render(results);
+            this.graphRenderer.updateAudioBuffers(); // Update audio buffers for playback
             this.uiManager.updateStats(results);
             
         } catch (error) {
@@ -76,8 +83,6 @@ class LoudnessGraphApp {
         this.uiManager.hideGraph();
         this.uiManager.clearError();
     }
-
-
 }
 
 // Initialize the app when the DOM is loaded

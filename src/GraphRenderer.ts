@@ -1,4 +1,5 @@
 import { AnalysisData } from './AudioAnalyzer';
+import { AudioPlayer } from './AudioPlayer';
 
 export class GraphRenderer {
     private canvas: HTMLCanvasElement;
@@ -8,6 +9,8 @@ export class GraphRenderer {
     private isMouseOver: boolean = false;
     private mouseX: number = 0;
     private mouseY: number = 0;
+    private audioPlayer: AudioPlayer;
+    private isMouseDown: boolean = false;
 
     constructor() {
         this.canvas = document.getElementById('loudnessCanvas') as HTMLCanvasElement;
@@ -20,6 +23,7 @@ export class GraphRenderer {
             throw new Error('Could not get canvas context');
         }
 
+        this.audioPlayer = new AudioPlayer();
         this.createTooltip();
         this.setupCanvas();
         this.setupMouseEvents();
@@ -52,12 +56,47 @@ export class GraphRenderer {
         this.canvas.addEventListener('mouseenter', () => {
             this.isMouseOver = true;
             this.tooltip.style.display = 'block';
+            this.updateCursor();
         });
 
         this.canvas.addEventListener('mouseleave', () => {
             this.isMouseOver = false;
             this.tooltip.style.display = 'none';
+            this.handleMouseUp();
+            this.updateCursor();
         });
+
+        // Add click and hold functionality
+        this.canvas.addEventListener('mousedown', (e) => {
+            this.handleMouseDown(e);
+        });
+
+        this.canvas.addEventListener('mouseup', () => {
+            this.handleMouseUp();
+        });
+
+        // Handle mouse up outside canvas
+        document.addEventListener('mouseup', () => {
+            this.handleMouseUp();
+        });
+    }
+
+    private updateCursor(): void {
+        if (this.isMouseOver && this.data) {
+            const padding = 60;
+            const graphWidth = this.canvas.width - 2 * padding;
+            const graphHeight = this.canvas.height - 2 * padding;
+
+            // Check if mouse is within the graph area
+            if (this.mouseX >= padding && this.mouseX <= padding + graphWidth &&
+                this.mouseY >= padding && this.mouseY <= padding + graphHeight) {
+                this.canvas.style.cursor = 'pointer';
+            } else {
+                this.canvas.style.cursor = 'default';
+            }
+        } else {
+            this.canvas.style.cursor = 'default';
+        }
     }
 
     private handleMouseMove(e: MouseEvent): void {
@@ -66,6 +105,8 @@ export class GraphRenderer {
         const rect = this.canvas.getBoundingClientRect();
         this.mouseX = e.clientX - rect.left;
         this.mouseY = e.clientY - rect.top;
+
+        this.updateCursor();
 
         const padding = 60;
         const graphWidth = this.canvas.width - 2 * padding;
@@ -87,6 +128,75 @@ export class GraphRenderer {
         if (closestPoint) {
             this.updateTooltip(closestPoint, e.pageX, e.pageY);
         }
+    }
+
+    private handleMouseDown(e: MouseEvent): void {
+        if (!this.data || !this.isMouseOver) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouseX = e.clientX - rect.left;
+        this.mouseY = e.clientY - rect.top;
+
+        const padding = 60;
+        const graphWidth = this.canvas.width - 2 * padding;
+        const graphHeight = this.canvas.height - 2 * padding;
+
+        // Check if mouse is within the graph area
+        if (this.mouseX < padding || this.mouseX > padding + graphWidth ||
+            this.mouseY < padding || this.mouseY > padding + graphHeight) {
+            return;
+        }
+
+        // Calculate time from mouse position
+        const totalDuration = this.data.summary.totalDuration;
+        const time = ((this.mouseX - padding) / graphWidth) * totalDuration;
+
+        // Find which file this time corresponds to
+        const fileInfo = this.findFileAtTime(time);
+        if (fileInfo) {
+            this.isMouseDown = true;
+            
+            // Resume audio context if needed (required for user interaction)
+            this.audioPlayer.resumeAudioContext();
+            
+            // Start playback from the calculated time
+            this.audioPlayer.playFromTime(fileInfo.fileName, fileInfo.localTime);
+            
+            // Add visual feedback
+            this.canvas.style.cursor = 'grabbing';
+        }
+    }
+
+    private handleMouseUp(): void {
+        if (this.isMouseDown) {
+            this.isMouseDown = false;
+            this.audioPlayer.stop();
+            
+            // Restore cursor
+            this.updateCursor();
+        }
+    }
+
+    private findFileAtTime(targetTime: number): { fileName: string; localTime: number } | null {
+        if (!this.data) return null;
+
+        let currentTime = 0;
+        
+        for (const result of this.data.results) {
+            const fileEndTime = currentTime + result.duration;
+            
+            if (targetTime >= currentTime && targetTime <= fileEndTime) {
+                const localTime = targetTime - currentTime;
+                return {
+                    fileName: result.fileName,
+                    localTime: localTime
+                };
+            }
+            
+            currentTime = fileEndTime;
+        }
+        
+        return null;
     }
 
     private findClosestDataPoint(targetTime: number): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string } | null {
@@ -433,10 +543,25 @@ export class GraphRenderer {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 
+    public setAudioPlayer(audioPlayer: AudioPlayer): void {
+        this.audioPlayer = audioPlayer;
+    }
+
+    public updateAudioBuffers(): void {
+        if (this.data) {
+            const buffers = this.data.results.map(result => ({
+                fileName: result.fileName,
+                audioBuffer: result.audioBuffer
+            }));
+            this.audioPlayer.setAudioBuffers(buffers);
+        }
+    }
+
     public reset(): void {
         this.data = null;
         this.clear();
         this.tooltip.style.display = 'none';
+        this.handleMouseUp(); // Stop any playing audio
     }
 
     private getSpectralDescription(spectralBalance: number): string {

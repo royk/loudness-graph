@@ -14,6 +14,9 @@ export interface AudioAnalysisResult {
         lufs: number;
         spectralBalance: number; // -1 (bassy/red) to 1 (bright/blue)
     }[];
+    // Add audio buffer for playback
+    audioBuffer: AudioBuffer;
+    originalFile: File;
 }
 
 export interface AnalysisData {
@@ -116,7 +119,9 @@ export class AudioAnalyzer {
             lufs,
             rms,
             rmsDb,
-            timeData
+            timeData,
+            audioBuffer,
+            originalFile: file
         };
     }
 
@@ -336,6 +341,24 @@ export class AudioAnalyzer {
 
     public getAnalysisData(): AnalysisData | null {
         return this.analysisData;
+    }
+
+    // Add method to get audio buffer for a specific file
+    public getAudioBuffer(fileName: string): AudioBuffer | null {
+        if (!this.analysisData) return null;
+        
+        const result = this.analysisData.results.find(r => r.fileName === fileName);
+        return result ? result.audioBuffer : null;
+    }
+
+    // Add method to get all audio buffers
+    public getAllAudioBuffers(): { fileName: string; audioBuffer: AudioBuffer }[] {
+        if (!this.analysisData) return [];
+        
+        return this.analysisData.results.map(result => ({
+            fileName: result.fileName,
+            audioBuffer: result.audioBuffer
+        }));
     }
 
     public reset(): void {
