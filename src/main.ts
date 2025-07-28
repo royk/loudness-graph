@@ -35,6 +35,10 @@ class LoudnessGraphApp {
             this.reset();
         });
 
+        this.uiManager.onViewToggle(() => {
+            this.toggleView();
+        });
+
         console.log('Loudness Graph App initialized');
     }
 
@@ -53,6 +57,7 @@ class LoudnessGraphApp {
             this.graphRenderer.render(results);
             this.graphRenderer.updateAudioBuffers(); // Update audio buffers for playback
             this.uiManager.updateStats(results);
+            this.uiManager.updateViewToggleButton(false); // Initialize button text
             
         } catch (error) {
             console.error('Error processing files:', error);
@@ -82,6 +87,12 @@ class LoudnessGraphApp {
         this.graphRenderer.reset();
         this.uiManager.hideGraph();
         this.uiManager.clearError();
+    }
+
+    private toggleView(): void {
+        this.graphRenderer.toggleViewMode();
+        const currentMode = this.graphRenderer.getViewMode();
+        this.uiManager.updateViewToggleButton(currentMode === 'frequency');
     }
 }
 

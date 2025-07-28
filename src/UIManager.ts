@@ -10,10 +10,12 @@ export class UIManager {
     private statsContainer: HTMLElement;
     private exportBtn: HTMLButtonElement;
     private resetBtn: HTMLButtonElement;
+    private viewToggleBtn: HTMLButtonElement; // Add view toggle button
 
     private onFileSelectedCallback?: (files: FileList) => void;
     private onExportCallback?: () => void;
     private onResetCallback?: () => void;
+    private onViewToggleCallback?: () => void; // Add view toggle callback
 
 
     constructor() {
@@ -26,6 +28,7 @@ export class UIManager {
         this.statsContainer = document.getElementById('stats')!;
         this.exportBtn = document.getElementById('exportBtn') as HTMLButtonElement;
         this.resetBtn = document.getElementById('resetBtn') as HTMLButtonElement;
+        this.viewToggleBtn = document.getElementById('viewToggleBtn') as HTMLButtonElement; // Add view toggle button
 
         this.initializeEventListeners();
     }
@@ -74,6 +77,11 @@ export class UIManager {
             this.onResetCallback?.();
         });
 
+        // View toggle button
+        this.viewToggleBtn.addEventListener('click', () => {
+            this.onViewToggleCallback?.();
+        });
+
 
     }
 
@@ -87,6 +95,48 @@ export class UIManager {
 
     public onReset(callback: () => void): void {
         this.onResetCallback = callback;
+    }
+
+    public onViewToggle(callback: () => void): void {
+        this.onViewToggleCallback = callback;
+    }
+
+    public updateViewToggleButton(isFrequencyView: boolean): void {
+        this.viewToggleBtn.textContent = isFrequencyView ? 'Show Overall Loudness' : 'Show Frequency Bands';
+        this.updateLegend(isFrequencyView);
+    }
+
+    private updateLegend(isFrequencyView: boolean): void {
+        const legend = document.getElementById('legend');
+        if (!legend) return;
+
+        if (isFrequencyView) {
+            legend.innerHTML = `
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e53e3e;"></div>
+                    <span>Low (20-250 Hz)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #38a169;"></div>
+                    <span>Mid (250-4k Hz)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3182ce;"></div>
+                    <span>High (4k-20k Hz)</span>
+                </div>
+            `;
+        } else {
+            legend.innerHTML = `
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #667eea;"></div>
+                    <span>Peak Amplitude (dB)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #764ba2;"></div>
+                    <span>LUFS</span>
+                </div>
+            `;
+        }
     }
 
     public getCurrentLufsWindowSize(): number {

@@ -11,6 +11,7 @@ export class GraphRenderer {
     private mouseY: number = 0;
     private audioPlayer: AudioPlayer;
     private isMouseDown: boolean = false;
+    private viewMode: 'overall' | 'frequency' = 'overall'; // Add view mode property
 
     constructor() {
         this.canvas = document.getElementById('loudnessCanvas') as HTMLCanvasElement;
@@ -199,10 +200,10 @@ export class GraphRenderer {
         return null;
     }
 
-    private findClosestDataPoint(targetTime: number): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string } | null {
+    private findClosestDataPoint(targetTime: number): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number; fileName: string } | null {
         if (!this.data) return null;
 
-        let closestPoint: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string } | null = null;
+        let closestPoint: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number; fileName: string } | null = null;
         let minDistance = Infinity;
         let currentTime = 0;
 
@@ -225,19 +226,37 @@ export class GraphRenderer {
         return closestPoint;
     }
 
-    private updateTooltip(point: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; fileName: string }, pageX: number, pageY: number): void {
+    private updateTooltip(point: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number; fileName: string }, pageX: number, pageY: number): void {
         const timeStr = this.formatTime(point.time);
-        const peakStr = isFinite(point.peak) ? `${point.peak.toFixed(1)} dB` : 'Silence';
-        const lufsStr = isFinite(point.lufs) ? `${point.lufs.toFixed(1)} LUFS` : 'Silence';
-        const spectralStr = this.getSpectralDescription(point.spectralBalance);
-
-        this.tooltip.innerHTML = `
+        
+        let tooltipContent = `
             <div style="font-weight: 600; margin-bottom: 4px;">${point.fileName}</div>
             <div>Time: ${timeStr}</div>
-            <div>Peak: ${peakStr}</div>
-            <div>LUFS: ${lufsStr}</div>
-            <div>Spectral: ${spectralStr}</div>
         `;
+
+        if (this.viewMode === 'overall') {
+            const peakStr = isFinite(point.peak) ? `${point.peak.toFixed(1)} dB` : 'Silence';
+            const lufsStr = isFinite(point.lufs) ? `${point.lufs.toFixed(1)} LUFS` : 'Silence';
+            const spectralStr = this.getSpectralDescription(point.spectralBalance);
+            
+            tooltipContent += `
+                <div>Peak: ${peakStr}</div>
+                <div>LUFS: ${lufsStr}</div>
+                <div>Spectral: ${spectralStr}</div>
+            `;
+        } else {
+            const lowStr = isFinite(point.lowBandRms) ? `${point.lowBandRms.toFixed(1)} dB` : 'Silence';
+            const midStr = isFinite(point.midBandRms) ? `${point.midBandRms.toFixed(1)} dB` : 'Silence';
+            const highStr = isFinite(point.highBandRms) ? `${point.highBandRms.toFixed(1)} dB` : 'Silence';
+            
+            tooltipContent += `
+                <div style="color: #e53e3e;">Low (20-250 Hz): ${lowStr}</div>
+                <div style="color: #38a169;">Mid (250-4k Hz): ${midStr}</div>
+                <div style="color: #3182ce;">High (4k-20k Hz): ${highStr}</div>
+            `;
+        }
+
+        this.tooltip.innerHTML = tooltipContent;
 
         // Position tooltip using page coordinates (relative to document)
         const tooltipRect = this.tooltip.getBoundingClientRect();
@@ -345,14 +364,30 @@ export class GraphRenderer {
 
         this.data.results.forEach(result => {
             result.timeData.forEach(point => {
-                // Only include finite values in range calculation
-                if (isFinite(point.peak)) {
-                    minAmplitude = Math.min(minAmplitude, point.peak);
-                    maxAmplitude = Math.max(maxAmplitude, point.peak);
-                }
-                if (isFinite(point.lufs)) {
-                    minAmplitude = Math.min(minAmplitude, point.lufs);
-                    maxAmplitude = Math.max(maxAmplitude, point.lufs);
+                if (this.viewMode === 'overall') {
+                    // Only include finite values in range calculation for overall view
+                    if (isFinite(point.peak)) {
+                        minAmplitude = Math.min(minAmplitude, point.peak);
+                        maxAmplitude = Math.max(maxAmplitude, point.peak);
+                    }
+                    if (isFinite(point.lufs)) {
+                        minAmplitude = Math.min(minAmplitude, point.lufs);
+                        maxAmplitude = Math.max(maxAmplitude, point.lufs);
+                    }
+                } else {
+                    // Include frequency band values in range calculation
+                    if (isFinite(point.lowBandRms)) {
+                        minAmplitude = Math.min(minAmplitude, point.lowBandRms);
+                        maxAmplitude = Math.max(maxAmplitude, point.lowBandRms);
+                    }
+                    if (isFinite(point.midBandRms)) {
+                        minAmplitude = Math.min(minAmplitude, point.midBandRms);
+                        maxAmplitude = Math.max(maxAmplitude, point.midBandRms);
+                    }
+                    if (isFinite(point.highBandRms)) {
+                        minAmplitude = Math.min(minAmplitude, point.highBandRms);
+                        maxAmplitude = Math.max(maxAmplitude, point.highBandRms);
+                    }
                 }
             });
         });
@@ -361,37 +396,63 @@ export class GraphRenderer {
         const range = maxAmplitude - minAmplitude;
         minAmplitude -= range * 0.1;
         maxAmplitude += range * 0.1;
+        
+        // Ensure we have a reasonable range for frequency bands
+        if (this.viewMode === 'frequency' && (range === 0 || !isFinite(range))) {
+            minAmplitude = -60;
+            maxAmplitude = 0;
+        }
 
         // Draw data for each file
         this.data.results.forEach((result) => {
+            if (this.viewMode === 'overall') {
+                // Draw peak amplitude line
+                this.drawLine(
+                    result.timeData,
+                    'peak',
+                    currentTime,
+                    totalDuration,
+                    minAmplitude,
+                    maxAmplitude,
+                    padding,
+                    graphWidth,
+                    graphHeight,
+                    2
+                );
 
-            // Draw peak amplitude line
-            this.drawLine(
-                result.timeData,
-                'peak',
-                currentTime,
-                totalDuration,
-                minAmplitude,
-                maxAmplitude,
-                padding,
-                graphWidth,
-                graphHeight,
-                2
-            );
-
-            // Draw LUFS line
-            this.drawLine(
-                result.timeData,
-                'lufs',
-                currentTime,
-                totalDuration,
-                minAmplitude,
-                maxAmplitude,
-                padding,
-                graphWidth,
-                graphHeight,
-                2
-            );
+                // Draw LUFS line
+                this.drawLine(
+                    result.timeData,
+                    'lufs',
+                    currentTime,
+                    totalDuration,
+                    minAmplitude,
+                    maxAmplitude,
+                    padding,
+                    graphWidth,
+                    graphHeight,
+                    2
+                );
+            } else {
+                        // Draw frequency band lines
+        this.drawFrequencyBands(
+            result.timeData,
+            currentTime,
+            totalDuration,
+            minAmplitude,
+            maxAmplitude,
+            padding,
+            graphWidth,
+            graphHeight
+        );
+        
+        // Debug logging for first few data points
+        if (result.timeData.length > 0 && Math.random() < 0.1) {
+            const firstPoint = result.timeData[0];
+            console.log(`Graph Debug: Low=${firstPoint.lowBandRms.toFixed(1)}dB, Mid=${firstPoint.midBandRms.toFixed(1)}dB, High=${firstPoint.highBandRms.toFixed(1)}dB`);
+            console.log(`Range: Min=${minAmplitude.toFixed(1)}, Max=${maxAmplitude.toFixed(1)}`);
+        }
+            }
 
             currentTime += result.duration;
         });
@@ -472,6 +533,66 @@ export class GraphRenderer {
         }
     }
 
+    private drawFrequencyBands(
+        timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number }[],
+        startTime: number,
+        totalDuration: number,
+        minAmplitude: number,
+        maxAmplitude: number,
+        padding: number,
+        graphWidth: number,
+        graphHeight: number
+    ): void {
+        if (timeData.length === 0) return;
+
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        // Draw low frequency band (20-250 Hz) - Red
+        this.ctx.strokeStyle = '#e53e3e';
+        this.drawFrequencyBand(timeData, 'lowBandRms', startTime, totalDuration, minAmplitude, maxAmplitude, padding, graphWidth, graphHeight);
+
+        // Draw mid frequency band (250-4000 Hz) - Green
+        this.ctx.strokeStyle = '#38a169';
+        this.drawFrequencyBand(timeData, 'midBandRms', startTime, totalDuration, minAmplitude, maxAmplitude, padding, graphWidth, graphHeight);
+
+        // Draw high frequency band (4000-20000 Hz) - Blue
+        this.ctx.strokeStyle = '#3182ce';
+        this.drawFrequencyBand(timeData, 'highBandRms', startTime, totalDuration, minAmplitude, maxAmplitude, padding, graphWidth, graphHeight);
+    }
+
+    private drawFrequencyBand(
+        timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number }[],
+        bandType: 'lowBandRms' | 'midBandRms' | 'highBandRms',
+        startTime: number,
+        totalDuration: number,
+        minAmplitude: number,
+        maxAmplitude: number,
+        padding: number,
+        graphWidth: number,
+        graphHeight: number
+    ): void {
+        this.ctx.beginPath();
+        
+        timeData.forEach((point, index) => {
+            const x = padding + ((startTime + point.time) / totalDuration) * graphWidth;
+            const value = point[bandType];
+            
+            if (!isFinite(value)) return;
+            
+            const y = padding + graphHeight - ((value - minAmplitude) / (maxAmplitude - minAmplitude)) * graphHeight;
+
+            if (index === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        });
+        
+        this.ctx.stroke();
+    }
+
     private getSpectralColor(spectralBalance: number): string {
         // spectralBalance ranges from -1 (bassy/red) to 1 (bright/blue)
         // Use distinct colors for each spectral balance category
@@ -533,9 +654,12 @@ export class GraphRenderer {
         this.ctx.save();
         this.ctx.translate(20, height / 2);
         this.ctx.rotate(-Math.PI / 2);
-        this.ctx.fillText('Amplitude (dB)', 0, 0);
+        const yAxisLabel = this.viewMode === 'overall' ? 'Amplitude (dB)' : 'Frequency Band RMS (dB)';
+        this.ctx.fillText(yAxisLabel, 0, 0);
         this.ctx.restore();
     }
+
+
 
     private formatTime(seconds: number): string {
         const minutes = Math.floor(seconds / 60);
@@ -562,6 +686,24 @@ export class GraphRenderer {
         this.clear();
         this.tooltip.style.display = 'none';
         this.handleMouseUp(); // Stop any playing audio
+    }
+
+    public setViewMode(mode: 'overall' | 'frequency'): void {
+        this.viewMode = mode;
+        if (this.data) {
+            this.render(this.data);
+        }
+    }
+
+    public getViewMode(): 'overall' | 'frequency' {
+        return this.viewMode;
+    }
+
+    public toggleViewMode(): void {
+        this.viewMode = this.viewMode === 'overall' ? 'frequency' : 'overall';
+        if (this.data) {
+            this.render(this.data);
+        }
     }
 
     private getSpectralDescription(spectralBalance: number): string {

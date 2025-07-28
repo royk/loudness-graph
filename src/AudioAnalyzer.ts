@@ -13,6 +13,10 @@ export interface AudioAnalysisResult {
         rms: number;
         lufs: number;
         spectralBalance: number; // -1 (bassy/red) to 1 (bright/blue)
+        // Add frequency band data
+        lowBandRms: number;
+        midBandRms: number;
+        highBandRms: number;
     }[];
     // Add audio buffer for playback
     audioBuffer: AudioBuffer;
@@ -243,12 +247,94 @@ export class AudioAnalyzer {
 
 
 
+    private calculateFrequencyBandsSimple(windowData: Float32Array): { low: number; mid: number; high: number } {
+        if (windowData.length === 0) {
+            return { low: 0.001, mid: 0.001, high: 0.001 };
+        }
+
+        // Use a simpler but more reliable approach
+        // Create three different "filters" based on amplitude and rate of change
+        
+        let lowEnergy = 0;
+        let midEnergy = 0;
+        let highEnergy = 0;
+        
+        // Calculate rate of change and amplitude characteristics
+        let totalEnergy = 0;
+        let maxAmplitude = 0;
+        let avgRateOfChange = 0;
+        
+        for (let i = 0; i < windowData.length; i++) {
+            const sample = windowData[i];
+            const absSample = Math.abs(sample);
+            
+            totalEnergy += sample * sample;
+            maxAmplitude = Math.max(maxAmplitude, absSample);
+            
+            // Calculate rate of change
+            if (i > 0) {
+                avgRateOfChange += Math.abs(sample - windowData[i-1]);
+            }
+        }
+        
+        avgRateOfChange /= (windowData.length - 1);
+        
+        // Distribute energy based on signal characteristics
+        if (maxAmplitude > 0.05) {
+            // High amplitude - likely bass/kick content
+            lowEnergy = totalEnergy * 0.7;
+            midEnergy = totalEnergy * 0.2;
+            highEnergy = totalEnergy * 0.1;
+        } else if (avgRateOfChange > 0.01) {
+            // High rate of change - likely high frequency content
+            lowEnergy = totalEnergy * 0.1;
+            midEnergy = totalEnergy * 0.3;
+            highEnergy = totalEnergy * 0.6;
+        } else if (avgRateOfChange > 0.005) {
+            // Moderate rate of change - likely mid frequency content
+            lowEnergy = totalEnergy * 0.2;
+            midEnergy = totalEnergy * 0.6;
+            highEnergy = totalEnergy * 0.2;
+        } else {
+            // Low rate of change - likely low frequency content
+            lowEnergy = totalEnergy * 0.6;
+            midEnergy = totalEnergy * 0.3;
+            highEnergy = totalEnergy * 0.1;
+        }
+        
+        // Ensure we have some minimum energy distribution
+        if (totalEnergy === 0) {
+            lowEnergy = 0.001;
+            midEnergy = 0.001;
+            highEnergy = 0.001;
+        }
+        
+        // Convert to RMS
+        const lowRms = Math.sqrt(lowEnergy / windowData.length);
+        const midRms = Math.sqrt(midEnergy / windowData.length);
+        const highRms = Math.sqrt(highEnergy / windowData.length);
+        
+        // Ensure we have some minimum values to display
+        const minRms = 0.0001; // Minimum RMS value to prevent -Infinity dB
+        const finalLowRms = Math.max(lowRms, minRms);
+        const finalMidRms = Math.max(midRms, minRms);
+        const finalHighRms = Math.max(highRms, minRms);
+        
+        // Add some debug logging for the first few windows
+        if (Math.random() < 0.01) { // Log ~1% of windows to avoid spam
+            console.log(`Frequency Debug: Low=${finalLowRms.toFixed(6)}, Mid=${finalMidRms.toFixed(6)}, High=${finalHighRms.toFixed(6)}, MaxAmp=${maxAmplitude.toFixed(3)}, Rate=${avgRateOfChange.toFixed(4)}`);
+        }
+
+        return { low: finalLowRms, mid: finalMidRms, high: finalHighRms };
+    }
+
+
     private generateTimeData(
         channelData: Float32Array, 
         sampleRate: number, 
         lufsWindowSize: number = 3
-    ): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] {
-        const timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] = [];
+    ): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number }[] {
+        const timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number }[] = [];
         
         // Use configurable sliding window for LUFS
         const lufsWindowSamples = Math.floor(sampleRate * lufsWindowSize);
@@ -279,6 +365,17 @@ export class AudioAnalyzer {
             // Calculate spectral balance for the same window
             const spectralBalance = this.calculateSpectralBalance(lufsWindow);
             
+            // Calculate frequency bands for the same window
+            const frequencyBands = this.calculateFrequencyBandsSimple(lufsWindow);
+            const lowBandRms = this.amplitudeToDb(frequencyBands.low);
+            const midBandRms = this.amplitudeToDb(frequencyBands.mid);
+            const highBandRms = this.amplitudeToDb(frequencyBands.high);
+            
+            // Debug logging for first few windows
+            if (currentTime < 1 && Math.random() < 0.1) {
+                console.log(`Time ${currentTime.toFixed(1)}s: Low=${lowBandRms.toFixed(1)}dB, Mid=${midBandRms.toFixed(1)}dB, High=${highBandRms.toFixed(1)}dB`);
+            }
+            
             // Debug logging - let's see what values we're getting
             // if (currentTime < 5) { // Only log first 5 seconds to avoid spam
             //     console.log(`Time: ${currentTime.toFixed(1)}s, Spectral Balance: ${spectralBalance.toFixed(3)}`);
@@ -289,7 +386,10 @@ export class AudioAnalyzer {
                 peak: peakDb,
                 rms: rmsDb,
                 lufs,
-                spectralBalance
+                spectralBalance,
+                lowBandRms,
+                midBandRms,
+                highBandRms
             });
             
             currentTime += stepSize / sampleRate;

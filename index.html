@@ -313,7 +313,7 @@
 
         .playback-hint {
             position: absolute;
-            bottom: 10px;
+            bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.7);
@@ -488,6 +488,7 @@
             <div class="graph-header">
                 <h2 class="graph-title">Loudness Analysis</h2>
                 <div class="controls">
+                    <button class="btn" id="viewToggleBtn">Show Frequency Bands</button>
                     <button class="btn" id="exportBtn">Export Data</button>
                     <button class="btn" id="resetBtn">Reset</button>
                 </div>
@@ -500,7 +501,7 @@
                 </div>
             </div>
             
-            <div class="legend">
+            <div class="legend" id="legend">
                 <div class="legend-item">
                     <div class="legend-color" style="background: #667eea;"></div>
                     <span>Peak Amplitude (dB)</span>
