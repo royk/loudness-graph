@@ -365,7 +365,7 @@ export class AudioAnalyzer {
             // Calculate spectral balance for the same window
             const spectralBalance = this.calculateSpectralBalance(lufsWindow);
             
-            // Calculate frequency bands for the same window
+            // Calculate frequency bands for the same window (using LUFS window size)
             const frequencyBands = this.calculateFrequencyBandsSimple(lufsWindow);
             const lowBandRms = this.amplitudeToDb(frequencyBands.low);
             const midBandRms = this.amplitudeToDb(frequencyBands.mid);
