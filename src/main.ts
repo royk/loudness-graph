@@ -90,9 +90,16 @@ class LoudnessGraphApp {
     }
 
     private toggleView(): void {
-        this.graphRenderer.toggleViewMode();
         const currentMode = this.graphRenderer.getViewMode();
-        this.uiManager.updateViewToggleButton(currentMode === 'frequency');
+        const newMode = currentMode === 'overall' ? 'frequency' : 'overall';
+        
+        // If switching to frequency view, calculate frequency bands if not already done
+        if (newMode === 'frequency') {
+            this.audioAnalyzer.calculateFrequencyBandsForAllResults();
+        }
+        
+        this.graphRenderer.setViewMode(newMode);
+        this.uiManager.updateViewToggleButton(newMode === 'frequency');
     }
 }
 

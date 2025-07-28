@@ -13,14 +13,17 @@ export interface AudioAnalysisResult {
         rms: number;
         lufs: number;
         spectralBalance: number; // -1 (bassy/red) to 1 (bright/blue)
-        // Add frequency band data
-        lowBandRms: number;
-        midBandRms: number;
-        highBandRms: number;
     }[];
     // Add audio buffer for playback
     audioBuffer: AudioBuffer;
     originalFile: File;
+    // Add frequency band data (calculated on-demand)
+    frequencyBandData?: {
+        time: number;
+        lowBandRms: number;
+        midBandRms: number;
+        highBandRms: number;
+    }[];
 }
 
 export interface AnalysisData {
@@ -320,10 +323,7 @@ export class AudioAnalyzer {
         const finalMidRms = Math.max(midRms, minRms);
         const finalHighRms = Math.max(highRms, minRms);
         
-        // Add some debug logging for the first few windows
-        if (Math.random() < 0.01) { // Log ~1% of windows to avoid spam
-            console.log(`Frequency Debug: Low=${finalLowRms.toFixed(6)}, Mid=${finalMidRms.toFixed(6)}, High=${finalHighRms.toFixed(6)}, MaxAmp=${maxAmplitude.toFixed(3)}, Rate=${avgRateOfChange.toFixed(4)}`);
-        }
+
 
         return { low: finalLowRms, mid: finalMidRms, high: finalHighRms };
     }
@@ -333,8 +333,8 @@ export class AudioAnalyzer {
         channelData: Float32Array, 
         sampleRate: number, 
         lufsWindowSize: number = 3
-    ): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number }[] {
-        const timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number; lowBandRms: number; midBandRms: number; highBandRms: number }[] = [];
+    ): { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] {
+        const timeData: { time: number; peak: number; rms: number; lufs: number; spectralBalance: number }[] = [];
         
         // Use configurable sliding window for LUFS
         const lufsWindowSamples = Math.floor(sampleRate * lufsWindowSize);
@@ -365,17 +365,6 @@ export class AudioAnalyzer {
             // Calculate spectral balance for the same window
             const spectralBalance = this.calculateSpectralBalance(lufsWindow);
             
-            // Calculate frequency bands for the same window (using LUFS window size)
-            const frequencyBands = this.calculateFrequencyBandsSimple(lufsWindow);
-            const lowBandRms = this.amplitudeToDb(frequencyBands.low);
-            const midBandRms = this.amplitudeToDb(frequencyBands.mid);
-            const highBandRms = this.amplitudeToDb(frequencyBands.high);
-            
-            // Debug logging for first few windows
-            if (currentTime < 1 && Math.random() < 0.1) {
-                console.log(`Time ${currentTime.toFixed(1)}s: Low=${lowBandRms.toFixed(1)}dB, Mid=${midBandRms.toFixed(1)}dB, High=${highBandRms.toFixed(1)}dB`);
-            }
-            
             // Debug logging - let's see what values we're getting
             // if (currentTime < 5) { // Only log first 5 seconds to avoid spam
             //     console.log(`Time: ${currentTime.toFixed(1)}s, Spectral Balance: ${spectralBalance.toFixed(3)}`);
@@ -386,10 +375,7 @@ export class AudioAnalyzer {
                 peak: peakDb,
                 rms: rmsDb,
                 lufs,
-                spectralBalance,
-                lowBandRms,
-                midBandRms,
-                highBandRms
+                spectralBalance
             });
             
             currentTime += stepSize / sampleRate;
@@ -463,5 +449,60 @@ export class AudioAnalyzer {
 
     public reset(): void {
         this.analysisData = null;
+    }
+
+    public calculateFrequencyBandsForResult(result: AudioAnalysisResult): void {
+        if (result.frequencyBandData) {
+            return; // Already calculated
+        }
+
+        const frequencyBandData: { time: number; lowBandRms: number; midBandRms: number; highBandRms: number }[] = [];
+        
+        // Get the original audio data
+        const channelData = result.audioBuffer.getChannelData(0);
+        const sampleRate = result.audioBuffer.sampleRate;
+        
+        // Use the same window size as the original analysis
+        const lufsWindowSize = 3; // Default, could be made configurable
+        const lufsWindowSamples = Math.floor(sampleRate * lufsWindowSize);
+        const stepSize = Math.floor(sampleRate * 0.1); // 100ms steps
+        
+        let currentTime = 0;
+        let currentIndex = 0;
+        
+        while (currentIndex < channelData.length) {
+            // Calculate LUFS using configurable sliding window
+            const lufsEnd = Math.min(currentIndex + lufsWindowSamples, channelData.length);
+            const lufsWindow = channelData.slice(currentIndex, lufsEnd);
+            
+            // Calculate frequency bands for the same window
+            const frequencyBands = this.calculateFrequencyBandsSimple(lufsWindow);
+            const lowBandRms = this.amplitudeToDb(frequencyBands.low);
+            const midBandRms = this.amplitudeToDb(frequencyBands.mid);
+            const highBandRms = this.amplitudeToDb(frequencyBands.high);
+            
+            frequencyBandData.push({
+                time: currentTime,
+                lowBandRms,
+                midBandRms,
+                highBandRms
+            });
+            
+            currentTime += stepSize / sampleRate;
+            currentIndex += stepSize;
+            
+            // Stop if we've processed all data
+            if (currentIndex >= channelData.length) break;
+        }
+        
+        result.frequencyBandData = frequencyBandData;
+    }
+
+    public calculateFrequencyBandsForAllResults(): void {
+        if (!this.analysisData) return;
+        
+        this.analysisData.results.forEach(result => {
+            this.calculateFrequencyBandsForResult(result);
+        });
     }
 } 
